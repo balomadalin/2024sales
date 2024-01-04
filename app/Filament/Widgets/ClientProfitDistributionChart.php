@@ -1,6 +1,10 @@
 <?php
 
 namespace App\Filament\Widgets;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use Filament\Support\RawJs;
+use Filament\Widgets\ChartWidget;
 
 use App\Models\Client;
 use App\Models\Invoice;
@@ -8,9 +12,8 @@ use App\Models\Expense;
 use App\Models\Collection;
 
 
-use Carbon\Carbon;
-use Filament\Support\RawJs;
-use Filament\Widgets\ChartWidget;
+
+
 
 class ClientProfitDistributionChart extends ChartWidget
 {
@@ -111,13 +114,15 @@ class ClientProfitDistributionChart extends ChartWidget
 
     protected function getFilters(): ?array
     {
-        $firstDate = Invoice::whereNotNull('start_at')
-            ->oldest('start_at')
-            ->first()
-            ->start_at;
-        $period = Carbon::parse($firstDate)->startOfYear()->yearsUntil(now());
-        $years = array_reverse(iterator_to_array($period->map(fn(Carbon $date) => $date->format('Y'))));
-        return array_combine($years, $years);
+        $res = Invoice::select('start_at')->whereNotNull('start_at')->oldest('start_at')->first();
+        if($res) {
+            $res = $res->start_at;
+            $period = Carbon::parse($res)->startOfYear()->yearsUntil(now());
+            $years = array_reverse(iterator_to_array($period->map(fn(Carbon $date) => $date->format('Y'))));
+            return array_combine($years, $years);
+        }
+        return [];
+        //Log::debug($res);
     }
 
     protected function getOptions(): RawJs
