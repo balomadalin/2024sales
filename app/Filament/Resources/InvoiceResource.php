@@ -266,7 +266,8 @@ class InvoiceResource extends Resource
                     Actions\Action::make('download')
                         ->label(__('download'))
                         ->icon('tabler-file-type-pdf')
-                        ->url(fn (Invoice $record): string => static::getUrl('download', ['record' => $record]))
+                        ->url(fn (Invoice $record): string => route('document.download', ['invoice' => $record->id]))
+                        //->url(fn (Invoice $record): string => static::getUrl('download', ['record' => $record]))
                         ->openUrlInNewTab(),
                     Actions\Action::make('send')
                         ->label('Trimite mesaj')

@@ -1,31 +1,33 @@
 <?php
 
 namespace App\Filament\Resources;
-
-use App\Filament\Resources\CompanyResource\Pages;
-use App\Filament\Resources\CompanyResource\RelationManagers;
-use App\Models\Company;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use App\Models\Company;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Forms\Components\Card;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Components\Wizard\Step;
-use Filament\Tables\Columns\ImageColumn;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\TextInputColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use Illuminate\Support\Str;
+use Filament\Resources\Resource;
+use Filament\Forms\Components\Card;
+use Filament\Forms\Components\Grid;
+use Filament\Tables\Actions\Action;
+use Illuminate\Support\Facades\Log;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Wizard;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Forms\Components\FileUpload;
+use Filament\Tables\Columns\ToggleColumn;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\Wizard\Step;
+use Filament\Tables\Columns\TextInputColumn;
+use App\Filament\Resources\CompanyResource\Pages;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\CompanyResource\RelationManagers;
+use Filament\Notifications\Notification;
 
 class CompanyResource extends Resource
 {
@@ -34,6 +36,18 @@ class CompanyResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
     protected static ?string $navigationLabel = 'Companie';
     protected static ?string $navigationGroup = '';
+
+    public static function sendNotication($title = "Errors found!", $message, $severity = 'success')
+    {
+        Log::info('Sending notification');
+        Notification::make()
+            ->$severity()
+            ->title($title)
+            ->body($message)
+            ->send();
+    }
+
+
     public static function form(Form $form): Form
     {
         return $form
@@ -126,6 +140,19 @@ public static function table(Table $table): Table
                 //
             ])
             ->actions([
+                Action::make('set_company')
+                    ->requiresConfirmation()
+                    ->action(function (Company $record) {
+                        $company = $record->toArray();
+
+                        try {
+                            session(['company' => $company]);
+                            self::sendNotication('Company set', 'Company set successfully', 'success');
+                        }
+                        catch (\Exception $e) {
+                            self::sendNotication('Error', $e->getMessage(), 'danger');
+                        }
+                    }),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

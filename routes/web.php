@@ -1,14 +1,21 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Models\Invoice;
+use Barryvdh\DomPDF\Facade\Pdf;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
+
+Route::get('/document/{invoice}', function (Invoice $invoice) {
+    $data = [
+        'record' => $invoice,
+        'company' => session('company'),
+    ];
+
+    $pdf = PDF::loadView('filament.resources.invoice-resource.pages.template', $data);
+
+    return $pdf->stream();
+
+
+    return $pdf->download('pdf_file.pdf');
+
+})->name('document.download');
